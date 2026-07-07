@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Detail - SmallBizMart</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .user-menu { position: relative; }
+        .user-menu-toggle { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: white; text-decoration: none; padding: 0.5rem; border-radius: 4px; transition: background 0.3s; }
+        .user-menu-toggle:hover { background: rgba(255,255,255,0.1); }
+        .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--secondary-color); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem; }
+        .user-dropdown { position: absolute; top: 100%; right: 0; background: white; border-radius: 8px; box-shadow: 0 5px 20px rgba(0,0,0,0.2); min-width: 220px; display: none; z-index: 1000; margin-top: 0.5rem; overflow: hidden; }
+        .user-dropdown.show { display: block; }
+        .user-dropdown-header { padding: 1rem; border-bottom: 1px solid #eee; background: #f8f9fa; }
+        .user-dropdown-header h4 { color: var(--primary-color); font-size: 0.95rem; margin-bottom: 0.25rem; }
+        .user-dropdown-header p { color: #888; font-size: 0.8rem; }
+        .user-dropdown a { display: block; padding: 0.75rem 1rem; color: #555; text-decoration: none; transition: background 0.3s; font-size: 0.9rem; }
+        .user-dropdown a:hover { background: #f8f9fa; color: var(--secondary-color); }
+        .user-dropdown .divider { border-top: 1px solid #eee; margin: 0.25rem 0; }
+        .user-dropdown .logout { color: var(--accent-color); }
+        .nav-sell-link { display: none; }
+        .nav-sell-link.visible { display: list-item; }
+        @media (max-width: 768px) {
+            .user-dropdown { right: -50px; min-width: 200px; }
+            nav ul { flex-wrap: wrap; justify-content: center; }
+            nav ul li { margin: 0.25rem 0.5rem; }
+        }
+    </style>
+    <style>
+        .product-detail-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            margin: 2rem 0;
+        }
+        .product-gallery {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+        .product-gallery .main-image {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+        }
+        .gallery-thumbs {
+            display: flex;
+            gap: 0.5rem;
+            padding: 1rem;
+        }
+        .gallery-thumbs img {
+            width: 70px;
+            height: 70px;
+            object-fit: cover;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: border-color 0.3s;
+        }
+        .gallery-thumbs img:hover,
+        .gallery-thumbs img.active {
+            border-color: var(--secondary-color);
+        }
+        .product-info-panel {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            padding: 2rem;
+        }
+        .product-info-panel .category-badge {
+            display: inline-block;
+            background: var(--secondary-color);
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-bottom: 1rem;
+        }
+        .product-info-panel h1 {
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            font-size: 1.8rem;
+        }
+        .product-rating {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .stars {
+            color: #f39c12;
+            font-size: 1.1rem;
+        }
+        .product-price-detail {
+            font-size: 2rem;
+            color: var(--accent-color);
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+        .product-description-detail {
+            color: #555;
+            line-height: 1.8;
+            margin-bottom: 1.5rem;
+        }
+        .product-meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .product-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .product-meta-item strong {
+            color: var(--primary-color);
+        }
+        .quantity-selector {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .quantity-selector label {
+            font-weight: 600;
+        }
+        .qty-control {
+            display: flex;
+            align-items: center;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .qty-control button {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: #f8f9fa;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+        .qty-control input {
+            width: 50px;
+            height: 40px;
+            border: none;
+            text-align: center;
+            font-size: 1rem;
+        }
+        .action-btns-detail {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .btn-chat {
+            background: var(--success-color);
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-chat:hover {
+            background: #219653;
+        }
+        .seller-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .seller-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--secondary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        .seller-info h4 {
+            color: var(--primary-color);
+            margin-bottom: 0.25rem;
+        }
+        .seller-info p {
+            color: #888;
+            font-size: 0.85rem;
+        }
+
+        /* Reviews Section */
+        .reviews-section {
+            margin-top: 3rem;
+        }
+        .reviews-section h2 {
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+        }
+        .review-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+        .reviewer {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .reviewer-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .reviewer-info h5 {
+            color: var(--primary-color);
+        }
+        .reviewer-info span {
+            color: #888;
+            font-size: 0.85rem;
+        }
+        .review-body {
+            color: #555;
+            line-height: 1.6;
+        }
+
+        /* Live Chat Widget */
+        .chat-widget {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        .chat-toggle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--success-color);
+            color: white;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: transform 0.3s;
+        }
+        .chat-toggle:hover {
+            transform: scale(1.1);
+        }
+        .chat-box {
+            position: absolute;
+            bottom: 70px;
+            right: 0;
+            width: 350px;
+            height: 450px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.2);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .chat-box.open {
+            display: flex;
+        }
+        .chat-header {
+            background: var(--primary-color);
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .chat-header h4 {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .online-dot {
+            width: 8px;
+            height: 8px;
+            background: #2ecc71;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .chat-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        .chat-messages {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            background: #f8f9fa;
+        }
+        .chat-message {
+            margin-bottom: 1rem;
+            max-width: 80%;
+        }
+        .chat-message.sent {
+            margin-left: auto;
+            text-align: right;
+        }
+        .chat-message .msg-bubble {
+            display: inline-block;
+            padding: 0.6rem 1rem;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+        .chat-message.received .msg-bubble {
+            background: white;
+            border: 1px solid #ddd;
+            color: #333;
+            border-bottom-left-radius: 4px;
+        }
+        .chat-message.sent .msg-bubble {
+            background: var(--secondary-color);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+        .chat-message .msg-time {
+            font-size: 0.7rem;
+            color: #aaa;
+            margin-top: 0.25rem;
+        }
+        .chat-input-area {
+            padding: 1rem;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 0.5rem;
+        }
+        .chat-input-area input {
+            flex: 1;
+            padding: 0.6rem 1rem;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            outline: none;
+        }
+        .chat-input-area button {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .chat-input-area input {
+            min-width: 0;
+            flex: 1;
+        }
+        .typing-indicator {
+            font-size: 0.8rem;
+            color: #888;
+            padding: 0.5rem 1rem;
+            font-style: italic;
+        }
+        @media (max-width: 768px) {
+            .product-detail-layout {
+                grid-template-columns: 1fr;
+            }
+            .chat-box {
+                width: calc(100vw - 30px);
+                right: 5px;
+                left: 5px;
+                height: 60vh;
+            }
+            .chat-input-area {
+                padding: 0.75rem;
+                gap: 0.5rem;
+            }
+            .chat-input-area input {
+                min-width: 0;
+            }
+        }
+    </style>
+        /* ===== MOBILE RESPONSIVENESS FIXES ===== */
+        @media (max-width: 768px) {
+            .product-detail-layout {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+                margin: 1rem 0;
+            }
+            .product-gallery .main-image {
+                height: 250px;
+            }
+            .gallery-thumbs {
+                padding: 0.5rem;
+                gap: 0.3rem;
+            }
+            .gallery-thumbs img {
+                width: 55px;
+                height: 55px;
+            }
+            .product-info-panel {
+                padding: 1rem;
+            }
+            .product-info-panel h1 {
+                font-size: 1.3rem;
+            }
+            .product-price-detail {
+                font-size: 1.5rem;
+            }
+            .product-meta {
+                grid-template-columns: 1fr 1fr;
+                gap: 0.5rem;
+                padding: 0.75rem;
+                font-size: 0.85rem;
+            }
+            .product-meta-item {
+                gap: 0.3rem;
+            }
+            .quantity-selector {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+                margin-bottom: 1rem;
+            }
+            .action-btns-detail {
+                flex-direction: column;
+                gap: 0.75rem;
+                margin-bottom: 1rem;
+            }
+            .action-btns-detail .btn,
+            .btn-chat {
+                width: 100%;
+                justify-content: center;
+            }
+            .seller-info {
+                padding: 0.75rem;
+            }
+            /* Chat widget mobile fixes */
+            .chat-box {
+                width: calc(100vw - 20px);
+                right: 10px;
+                left: 10px;
+                height: 60vh;
+                bottom: 80px;
+            }
+            .chat-input-area {
+                padding: 0.75rem;
+                gap: 0.5rem;
+            }
+            .chat-input-area input {
+                min-width: 0;
+                padding: 0.6rem 0.8rem;
+                font-size: 0.9rem;
+            }
+            .chat-input-area button {
+                padding: 0.6rem 1rem;
+                font-size: 0.9rem;
+            }
+            .chat-messages {
+                padding: 1rem;
+                gap: 0.75rem;
+            }
+            .msg {
+                max-width: 85%;
+                padding: 0.6rem 0.8rem;
+                font-size: 0.9rem;
+            }
+        }
+        @media (max-width: 480px) {
+            .product-meta {
+                grid-template-columns: 1fr;
+                gap: 0.4rem;
+            }
+            .product-gallery .main-image {
+                height: 200px;
+            }
+            .reviews-section {
+                margin-top: 2rem;
+            }
+            .review-card {
+                padding: 1rem;
+            }
+            .review-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+        }
+
+</head>
+<body>
+    <!-- Header -->
+    <header>
+    <!-- Mobile Header Bar -->
+    <div class="mobile-header-bar">
+        <div class="mobile-header-inner">
+            <button class="hamburger-btn" id="hamburgerBtn" aria-label="Toggle navigation">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </button>
+            <a href="index.html" class="mobile-logo">Small<span>Biz</span>Mart</a>
+            <a href="login.html" class="mobile-login-btn" id="mobileLoginBtn">Sign In</a>
+        </div>
+    </div>
+
+    <!-- Mobile Navigation Dropdown -->
+    <div class="mobile-nav-dropdown" id="mobileNavDropdown">
+        <div class="mobile-user-section" id="mobileUserSection" style="display:none;">
+            <div class="mobile-user-info">
+                <div class="mobile-user-avatar" id="mobileUserAvatar">U</div>
+                <div class="mobile-user-details">
+                    <h4 id="mobileUserName">User Name</h4>
+                    <p id="mobileUserEmail">user@email.com</p>
+                </div>
+            </div>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="products.html">Products</a></li>
+                <li><a href="about.html">About</a></li>
+                <li class="nav-sell-link" id="mobileNavSellLink" style="display:none;"><a href="seller-dashboard.html">Sell</a></li>
+                <li><a href="profile.html">👤 My Profile</a></li>
+                <li><a href="orders.html">📦 My Orders</a></li>
+                <li><a href="messages.html">💬 Messages</a></li>
+                <li><a href="cart.html" class="mobile-cart-link">
+                    <span>🛒 Shopping Cart</span>
+                    <span class="mobile-cart-badge" id="mobileCartCount">0</span>
+                </a></li>
+                <li id="mobileLogoutItem" style="display:none;"><a href="#" id="mobileLogoutLink" style="color: var(--accent-color);">🚪 Sign Out</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <!-- Mobile Nav Overlay -->
+    <div class="mobile-nav-overlay" id="mobileNavOverlay"></div>
+
+        <div class="container header-content">
+            <div class="logo">Small<span>Biz</span>Mart</div>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="products.html">Products</a></li>
+                    <li><a href="about.html">About</a></li>
+                    <li><a href="contact.html">Contact</a></li>
+                    <li class="nav-sell-link" id="navSellLink"><a href="seller-dashboard.html">Sell</a></li>
+                    <li class="user-menu" id="userMenu">
+                        <a href="#" class="user-menu-toggle" id="userMenuToggle">
+                            <span id="userMenuText">Account</span>
+                        </a>
+                        <div class="user-dropdown" id="userDropdown">
+                            <div class="user-dropdown-header">
+                                <h4 id="dropdownName">Guest</h4>
+                                <p id="dropdownEmail">Sign in to your account</p>
+                            </div>
+                            <a href="profile.html">👤 My Profile</a>
+                            <a href="orders.html">📦 My Orders</a>
+                            <a href="seller-dashboard.html" id="dropdownSellLink" style="display:none;">🏪 Seller Dashboard</a>
+                            <div class="divider"></div>
+                            <a href="login.html" id="dropdownLoginLink">🔑 Sign In</a>
+                            <a href="#" class="logout" id="dropdownLogoutLink" style="display:none;">🚪 Sign Out</a>
+                        </div>
+                    </li>
+                    <li class="cart-icon">
+                        <a href="cart.html" style="color: white; text-decoration: none;">
+                            <span>Cart</span>
+                            <span class="cart-count" id="cartCount">0</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Breadcrumb -->
+    <section class="breadcrumb">
+        <div class="container breadcrumb-content">
+            <a href="index.html">Home</a>
+            <span>></span>
+            <a href="products.html">Products</a>
+            <span>></span>
+            <span id="breadcrumbProduct">Product</span>
+        </div>
+    </section>
+
+    <!-- Product Detail -->
+    <section class="container">
+        <div class="product-detail-layout">
+            <div class="product-gallery">
+                <img src="" alt="Product" class="main-image" id="mainImage">
+                <div class="gallery-thumbs" id="galleryThumbs">
+                    <!-- Thumbnails loaded dynamically -->
+                </div>
+            </div>
+
+            <div class="product-info-panel">
+                <span class="category-badge" id="productCategory">Category</span>
+                <h1 id="productName">Product Name</h1>
+                <div class="product-rating">
+                    <span class="stars" id="productStars">★★★★☆</span>
+                    <span id="productRating">4.5</span>
+                    <span style="color:#888;">(<span id="reviewCount">12</span> reviews)</span>
+                </div>
+                <div class="product-price-detail" id="productPrice">₦0</div>
+                <p class="product-description-detail" id="productDescription">Description...</p>
+
+                <div class="product-meta">
+                    <div class="product-meta-item">
+                        <strong>Stock:</strong>
+                        <span id="productStock">In Stock</span>
+                    </div>
+                    <div class="product-meta-item">
+                        <strong>Condition:</strong>
+                        <span id="productCondition">Brand New</span>
+                    </div>
+                    <div class="product-meta-item">
+                        <strong>Delivery:</strong>
+                        <span>2-5 business days</span>
+                    </div>
+                    <div class="product-meta-item">
+                        <strong>Ships from:</strong>
+                        <span>Lagos, Nigeria</span>
+                    </div>
+                </div>
+
+                <div class="quantity-selector">
+                    <label>Quantity:</label>
+                    <div class="qty-control">
+                        <button type="button" id="qtyMinus">-</button>
+                        <input type="number" id="qtyInput" value="1" min="1" max="99">
+                        <button type="button" id="qtyPlus">+</button>
+                    </div>
+                </div>
+
+                <div class="action-btns-detail">
+                    <button class="btn" id="addToCartBtn" style="flex:1;">🛒 Add to Cart</button>
+                    <button class="btn-chat" id="chatSellerBtn">💬 Chat Seller</button>
+                </div>
+
+                <div class="seller-info">
+                    <div class="seller-avatar" id="sellerAvatar">S</div>
+                    <div>
+                        <h4 id="sellerName">Seller Name</h4>
+                        <p>⭐ <span id="sellerRating">4.8</span> rating | <span id="sellerSales">150</span> sales</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reviews Section -->
+        <div class="reviews-section">
+            <h2>Customer Reviews</h2>
+            <div id="reviewsList">
+                <div class="review-card">
+                    <div class="review-header">
+                        <div class="reviewer">
+                            <div class="reviewer-avatar">A</div>
+                            <div class="reviewer-info">
+                                <h5>Adebayo Oluwaseun</h5>
+                                <span>2 days ago</span>
+                            </div>
+                        </div>
+                        <span class="stars">★★★★★</span>
+                    </div>
+                    <div class="review-body">
+                        <p>Absolutely love this product! The quality exceeded my expectations. Fast delivery too. Will definitely buy again from this seller.</p>
+                    </div>
+                </div>
+                <div class="review-card">
+                    <div class="review-header">
+                        <div class="reviewer">
+                            <div class="reviewer-avatar">C</div>
+                            <div class="reviewer-info">
+                                <h5>Chioma Nwosu</h5>
+                                <span>1 week ago</span>
+                            </div>
+                        </div>
+                        <span class="stars">★★★★☆</span>
+                    </div>
+                    <div class="review-body">
+                        <p>Great product, exactly as described. The seller was very responsive when I had questions. Minor delay in shipping but overall satisfied.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Live Chat Widget -->
+    <div class="chat-widget">
+        <div class="chat-box" id="chatBox">
+            <div class="chat-header">
+                <h4><span class="online-dot"></span> Chat with <span id="chatSellerName">Seller</span></h4>
+                <button class="chat-close" id="chatClose">&times;</button>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <div class="chat-message received">
+                    <div class="msg-bubble">Hello! How can I help you with this product today?</div>
+                    <div class="msg-time">Just now</div>
+                </div>
+            </div>
+            <div class="typing-indicator" id="typingIndicator" style="display:none;">Seller is typing...</div>
+            <div class="chat-input-area">
+                <input type="text" id="chatInput" placeholder="Type your message...">
+                <button id="chatSend">➤</button>
+            </div>
+        </div>
+        <button class="chat-toggle" id="chatToggle">💬</button>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>About Us</h3>
+                    <p>SmallBizMart is dedicated to helping Nigerian small businesses thrive in the digital economy.</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="products.html">Products</a></li>
+                        <li><a href="about.html">About Us</a></li>
+                        <li><a href="contact.html">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Customer Support</h3>
+                    <ul>
+                        <li><a href="#">FAQs</a></li>
+                        <li><a href="#">Shipping Policy</a></li>
+                        <li><a href="#">Returns & Refunds</a></li>
+                        <li><a href="contact.html">Contact Us</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Contact Info</h3>
+                    <ul>
+                        <li>Email: support@smallbizmart.com</li>
+                        <li>Phone: +234 813 474 4132</li>
+                        <li>Address: 3 Ezimora Street Awada, Anambra, Nigeria</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2025 SmallBizMart. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="main.js"></script>
+    <script src="nav.js"></script>
+    <script type="module" src="product-detail.js"></script>
+
+    <!-- Mobile Navigation Script -->
+    <script>
+    (function() {
+        const hamburgerBtn = document.getElementById('hamburgerBtn');
+        const mobileNavDropdown = document.getElementById('mobileNavDropdown');
+        const mobileNavOverlay = document.getElementById('mobileNavOverlay');
+        const mobileLoginBtn = document.getElementById('mobileLoginBtn');
+        const mobileUserSection = document.getElementById('mobileUserSection');
+        const mobileUserName = document.getElementById('mobileUserName');
+        const mobileUserEmail = document.getElementById('mobileUserEmail');
+        const mobileUserAvatar = document.getElementById('mobileUserAvatar');
+        const mobileLogoutItem = document.getElementById('mobileLogoutItem');
+        const mobileLogoutLink = document.getElementById('mobileLogoutLink');
+        const mobileNavSellLink = document.getElementById('mobileNavSellLink');
+        const mobileCartCount = document.getElementById('mobileCartCount');
+
+        let isNavOpen = false;
+
+        function toggleNav() {
+            isNavOpen = !isNavOpen;
+            hamburgerBtn.classList.toggle('active', isNavOpen);
+            mobileNavDropdown.classList.toggle('show', isNavOpen);
+            mobileNavOverlay.classList.toggle('show', isNavOpen);
+            document.body.classList.toggle('nav-open', isNavOpen);
+        }
+
+        function closeNav() {
+            isNavOpen = false;
+            hamburgerBtn.classList.remove('active');
+            mobileNavDropdown.classList.remove('show');
+            mobileNavOverlay.classList.remove('show');
+            document.body.classList.remove('nav-open');
+        }
+
+        hamburgerBtn.addEventListener('click', toggleNav);
+        mobileNavOverlay.addEventListener('click', closeNav);
+
+        // Close nav when clicking a link
+        mobileNavDropdown.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                if (this.getAttribute('href') !== '#' || this.id === 'mobileLogoutLink') {
+                    closeNav();
+                }
+            });
+        });
+
+        // Handle logout on mobile
+        if (mobileLogoutLink) {
+            mobileLogoutLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                localStorage.removeItem('sbm_user');
+                showNotification('Logged out successfully', 'success');
+                setTimeout(() => window.location.href = 'index.html', 1000);
+            });
+        }
+
+        // Sync mobile nav with user state
+        function updateMobileNav() {
+            const user = JSON.parse(localStorage.getItem('sbm_user') || '{}');
+            const cart = JSON.parse(localStorage.getItem('smallBizCart') || '[]');
+            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+            if (mobileCartCount) mobileCartCount.textContent = totalItems;
+
+            if (user && user.uid) {
+                // User is logged in - show Account button
+                if (mobileLoginBtn) {
+                    mobileLoginBtn.textContent = 'Account';
+                    mobileLoginBtn.href = 'profile.html';
+                }
+                if (mobileUserSection) mobileUserSection.style.display = 'block';
+                if (mobileUserName) mobileUserName.textContent = user.name || 'User';
+                if (mobileUserEmail) mobileUserEmail.textContent = user.email || '';
+                if (mobileUserAvatar) mobileUserAvatar.textContent = (user.name || 'U').charAt(0).toUpperCase();
+                if (mobileLogoutItem) mobileLogoutItem.style.display = 'list-item';
+
+                if (user.role === 'seller') {
+                    if (mobileNavSellLink) mobileNavSellLink.style.display = 'list-item';
+                } else {
+                    if (mobileNavSellLink) mobileNavSellLink.style.display = 'none';
+                }
+            } else {
+                // Guest - show Sign In button
+                if (mobileLoginBtn) {
+                    mobileLoginBtn.textContent = 'Sign In';
+                    mobileLoginBtn.href = 'login.html';
+                }
+                if (mobileUserSection) mobileUserSection.style.display = 'none';
+                if (mobileLogoutItem) mobileLogoutItem.style.display = 'none';
+                if (mobileNavSellLink) mobileNavSellLink.style.display = 'none';
+            }
+        }
+
+        // Listen for storage changes
+        window.addEventListener('storage', updateMobileNav);
+
+        // Initial update
+        updateMobileNav();
+
+        // Close nav on escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && isNavOpen) {
+                closeNav();
+            }
+        });
+
+        // Close nav on window resize to desktop
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 768 && isNavOpen) {
+                closeNav();
+            }
+        });
+    })();
+    </script>
+
+</body>
+</html>

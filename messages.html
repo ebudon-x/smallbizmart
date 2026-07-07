@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Messages - SmallBizMart</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .user-menu { position: relative; }
+        .user-menu-toggle { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: white; text-decoration: none; padding: 0.5rem; border-radius: 4px; transition: background 0.3s; }
+        .user-menu-toggle:hover { background: rgba(255,255,255,0.1); }
+        .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--secondary-color); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem; }
+        .user-dropdown { position: absolute; top: 100%; right: 0; background: white; border-radius: 8px; box-shadow: 0 5px 20px rgba(0,0,0,0.2); min-width: 220px; display: none; z-index: 1000; margin-top: 0.5rem; overflow: hidden; }
+        .user-dropdown.show { display: block; }
+        .user-dropdown-header { padding: 1rem; border-bottom: 1px solid #eee; background: #f8f9fa; }
+        .user-dropdown-header h4 { color: var(--primary-color); font-size: 0.95rem; margin-bottom: 0.25rem; }
+        .user-dropdown-header p { color: #888; font-size: 0.8rem; }
+        .user-dropdown a { display: block; padding: 0.75rem 1rem; color: #555; text-decoration: none; transition: background 0.3s; font-size: 0.9rem; }
+        .user-dropdown a:hover { background: #f8f9fa; color: var(--secondary-color); }
+        .user-dropdown .divider { border-top: 1px solid #eee; margin: 0.25rem 0; }
+        .user-dropdown .logout { color: var(--accent-color); }
+        .nav-sell-link { display: none; }
+        .nav-sell-link.visible { display: list-item; }
+        @media (max-width: 768px) {
+            .user-dropdown { right: -50px; min-width: 200px; }
+            nav ul { flex-wrap: wrap; justify-content: center; }
+            nav ul li { margin: 0.25rem 0.5rem; }
+        }
+        .messages-layout { 
+            display: grid; 
+            grid-template-columns: 320px 1fr; 
+            gap: 1.5rem; 
+            height: calc(100vh - 250px); 
+            min-height: 500px;
+            margin: 2rem auto;
+        }
+        .chat-list { 
+            background: white; 
+            border-radius: 8px; 
+            overflow-y: auto; 
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+        .chat-list-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #eee;
+            background: #f8f9fa;
+        }
+        .chat-list-header h3 {
+            color: var(--primary-color);
+            font-size: 1.1rem;
+        }
+        .chat-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .chat-item:hover {
+            background: #f8f9fa;
+        }
+        .chat-item.active {
+            background: rgba(52, 152, 219, 0.08);
+            border-left: 3px solid var(--secondary-color);
+        }
+        .chat-item.unread {
+            background: rgba(52, 152, 219, 0.05);
+        }
+        .chat-item-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: var(--secondary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+        .chat-item-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .chat-item-info h5 {
+            color: var(--primary-color);
+            margin-bottom: 0.25rem;
+            font-size: 0.95rem;
+        }
+        .chat-item-info p {
+            color: #888;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .chat-item-meta {
+            text-align: right;
+            flex-shrink: 0;
+        }
+        .chat-item-meta .time {
+            font-size: 0.75rem;
+            color: #aaa;
+        }
+        .chat-item-meta .unread-badge {
+            display: inline-block;
+            background: var(--accent-color);
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 20px;
+            font-size: 0.7rem;
+            margin-top: 0.25rem;
+        }
+        .chat-window { 
+            background: white; 
+            border-radius: 8px; 
+            display: flex; 
+            flex-direction: column;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .chat-window-header { 
+            padding: 1rem 1.5rem; 
+            border-bottom: 1px solid #eee; 
+            background: #f8f9fa;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .chat-window-header .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--secondary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .chat-window-header h4 {
+            color: var(--primary-color);
+        }
+        .chat-window-header .online-status {
+            font-size: 0.8rem;
+            color: #27ae60;
+        }
+        .chat-messages { 
+            flex: 1; 
+            overflow-y: auto; 
+            padding: 1.5rem;
+            background: #fafafa;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .msg { 
+            max-width: 70%;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+        .msg.sent { 
+            background: var(--secondary-color); 
+            color: white; 
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+        }
+        .msg.received { 
+            background: white;
+            border: 1px solid #e0e0e0;
+            color: #333;
+            border-bottom-left-radius: 4px;
+        }
+        .msg-time {
+            font-size: 0.7rem;
+            opacity: 0.7;
+            margin-top: 0.25rem;
+            display: block;
+        }
+        .chat-input-area { 
+            display: flex; 
+            gap: 0.75rem; 
+            padding: 1rem 1.5rem; 
+            border-top: 1px solid #eee;
+            background: white;
+        }
+        .chat-input-area input { 
+            flex: 1; 
+            padding: 0.75rem 1rem; 
+            border: 1px solid #ddd; 
+            border-radius: 20px; 
+            outline: none;
+            font-size: 0.95rem;
+        }
+        .chat-input-area input:focus {
+            border-color: var(--secondary-color);
+        }
+        .chat-input-area button {
+            padding: 0.75rem 1.5rem;
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        .chat-input-area button:hover {
+            background: #2980b9;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #888;
+        }
+        .empty-state h3 {
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+        @media (max-width: 768px) {
+            .messages-layout {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+            .chat-list {
+                max-height: 300px;
+            }
+            .chat-window {
+                min-height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+    <!-- Mobile Header Bar -->
+    <div class="mobile-header-bar">
+        <div class="mobile-header-inner">
+            <button class="hamburger-btn" id="hamburgerBtn" aria-label="Toggle navigation">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </button>
+            <a href="index.html" class="mobile-logo">Small<span>Biz</span>Mart</a>
+            <a href="login.html" class="mobile-login-btn" id="mobileLoginBtn">Sign In</a>
+        </div>
+    </div>
+
+    <!-- Mobile Navigation Dropdown -->
+    <div class="mobile-nav-dropdown" id="mobileNavDropdown">
+        <div class="mobile-user-section" id="mobileUserSection" style="display:none;">
+            <div class="mobile-user-info">
+                <div class="mobile-user-avatar" id="mobileUserAvatar">U</div>
+                <div class="mobile-user-details">
+                    <h4 id="mobileUserName">User Name</h4>
+                    <p id="mobileUserEmail">user@email.com</p>
+                </div>
+            </div>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="products.html">Products</a></li>
+                <li><a href="about.html">About</a></li>
+                <li class="nav-sell-link" id="mobileNavSellLink" style="display:none;"><a href="seller-dashboard.html">Sell</a></li>
+                <li><a href="profile.html">👤 My Profile</a></li>
+                <li><a href="orders.html">📦 My Orders</a></li>
+                <li><a href="messages.html">💬 Messages</a></li>
+                <li><a href="cart.html" class="mobile-cart-link">
+                    <span>🛒 Shopping Cart</span>
+                    <span class="mobile-cart-badge" id="mobileCartCount">0</span>
+                </a></li>
+                <li id="mobileLogoutItem" style="display:none;"><a href="#" id="mobileLogoutLink" style="color: var(--accent-color);">🚪 Sign Out</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <!-- Mobile Nav Overlay -->
+    <div class="mobile-nav-overlay" id="mobileNavOverlay"></div>
+
+        <div class="container header-content">
+            <div class="logo">Small<span>Biz</span>Mart</div>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="products.html">Products</a></li>
+                    <li><a href="about.html">About</a></li>
+                    <li class="nav-sell-link" id="navSellLink"><a href="seller-dashboard.html">Sell</a></li>
+                    <li class="user-menu" id="userMenu">
+                        <a href="#" class="user-menu-toggle" id="userMenuToggle">
+                            <span id="userMenuText">Account</span>
+                        </a>
+                        <div class="user-dropdown" id="userDropdown">
+                            <div class="user-dropdown-header">
+                                <h4 id="dropdownName">Guest</h4>
+                                <p id="dropdownEmail">Sign in to your account</p>
+                            </div>
+                            <a href="profile.html">👤 My Profile</a>
+                            <a href="orders.html">📦 My Orders</a>
+                            <a href="messages.html">💬 Messages</a>
+                            <a href="seller-dashboard.html" id="dropdownSellLink" style="display:none;">🏪 Seller Dashboard</a>
+                            <div class="divider"></div>
+                            <a href="login.html" id="dropdownLoginLink">🔑 Sign In</a>
+                            <a href="#" class="logout" id="dropdownLogoutLink" style="display:none;">🚪 Sign Out</a>
+                        </div>
+                    </li>
+                    <li class="cart-icon">
+                        <a href="cart.html" style="color: white; text-decoration: none;">
+                            <span>Cart</span>
+                            <span class="cart-count" id="cartCount">0</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Page Header -->
+    <section class="page-header">
+        <div class="container">
+            <h1>My Messages</h1>
+            <p>Chat with sellers and view replies</p>
+        </div>
+    </section>
+
+    <!-- Messages -->
+    <section class="container">
+        <div class="messages-layout">
+            <div class="chat-list">
+                <div class="chat-list-header">
+                    <h3>Conversations</h3>
+                </div>
+                <div id="chatList">
+                    <div class="empty-state" style="padding:2rem;">
+                        <p>Loading conversations...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="chat-window">
+                <div class="chat-window-header" id="chatHeader">
+                    <div class="avatar">💬</div>
+                    <div>
+                        <h4>Select a conversation</h4>
+                        <span class="online-status">Choose from the list to start chatting</span>
+                    </div>
+                </div>
+                <div class="chat-messages" id="chatMessages">
+                    <div class="empty-state">
+                        <h3>No conversation selected</h3>
+                        <p>Select a chat from the list to view messages</p>
+                    </div>
+                </div>
+                <div class="chat-input-area" id="chatInputArea" style="display:none;">
+                    <input type="text" id="messageInput" placeholder="Type your message..." onkeypress="if(event.key==='Enter') sendReply()">
+                    <button onclick="sendReply()">Send</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>About Us</h3>
+                    <p>SmallBizMart is dedicated to helping Nigerian small businesses thrive in the digital economy.</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="products.html">Products</a></li>
+                        <li><a href="about.html">About Us</a></li>
+                        </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Customer Support</h3>
+                    <ul>
+                        <li><a href="#">FAQs</a></li>
+                        <li><a href="#">Shipping Policy</a></li>
+                        <li><a href="#">Returns & Refunds</a></li>
+                        <li><a href="contact.html">Contact Us</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Contact Info</h3>
+                    <ul>
+                        <li>Email: support@smallbizmart.com</li>
+                        <li>Phone: +234 813 474 4132</li>
+                        <li>Address: 3 Ezimora Street Awada, Anambra, Nigeria</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2025 SmallBizMart. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="main.js"></script>
+    <script src="nav.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getDatabase, ref, onValue, push, set, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+        import { firebaseConfig } from './firebase-config.js';
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const auth = getAuth(app);
+
+        let currentUser = null;
+        let activeChatId = null;
+        let messagesListener = null;
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) { 
+                window.location.href = 'login.html'; 
+                return; 
+            }
+            currentUser = user;
+            loadChats(user.uid);
+        });
+
+        function loadChats(userId) {
+            const chatList = document.getElementById('chatList');
+            const chatsRef = ref(db, 'chats');
+
+            onValue(chatsRef, (snapshot) => {
+                chatList.innerHTML = '';
+
+                if (!snapshot.exists()) {
+                    chatList.innerHTML = `
+                        <div class="empty-state" style="padding:2rem;">
+                            <h3>No messages yet</h3>
+                            <p>Start a conversation from a product page</p>
+                            <a href="products.html" class="btn" style="margin-top:1rem;">Browse Products</a>
+                        </div>
+                    `;
+                    return;
+                }
+
+                let hasChats = false;
+                snapshot.forEach((child) => {
+                    if (child.key.includes(userId)) {
+                        hasChats = true;
+                        const chat = child.val();
+                        const lastMsg = chat.lastMessage || {};
+                        const isUnread = !lastMsg.read && lastMsg.senderId !== userId;
+                        const time = lastMsg.timestamp 
+                            ? new Date(lastMsg.timestamp).toLocaleDateString() 
+                            : '';
+
+                        // Extract seller name from chat ID or last message
+                        const sellerName = lastMsg.senderName || 'Seller';
+
+                        const div = document.createElement('div');
+                        div.className = 'chat-item' + (isUnread ? ' unread' : '');
+                        div.setAttribute('data-chat-id', child.key);
+                        div.innerHTML = `
+                            <div class="chat-item-avatar">${sellerName.charAt(0).toUpperCase()}</div>
+                            <div class="chat-item-info">
+                                <h5>${sellerName}</h5>
+                                <p>${lastMsg.text || 'No messages yet'}</p>
+                            </div>
+                            <div class="chat-item-meta">
+                                <span class="time">${time}</span>
+                                ${isUnread ? '<span class="unread-badge">!</span>' : ''}
+                            </div>
+                        `;
+                        div.onclick = () => openChat(child.key, sellerName);
+                        chatList.appendChild(div);
+                    }
+                });
+
+                if (!hasChats) {
+                    chatList.innerHTML = `
+                        <div class="empty-state" style="padding:2rem;">
+                            <h3>No messages yet</h3>
+                            <p>Start a conversation from a product page</p>
+                            <a href="products.html" class="btn" style="margin-top:1rem;">Browse Products</a>
+                        </div>
+                    `;
+                }
+            });
+        }
+
+        function openChat(chatId, sellerName) {
+            activeChatId = chatId;
+
+            // Update UI
+            document.querySelectorAll('.chat-item').forEach(el => el.classList.remove('active'));
+            document.querySelector(`[data-chat-id="${chatId}"]`)?.classList.add('active');
+
+            document.getElementById('chatHeader').innerHTML = `
+                <div class="avatar">${sellerName.charAt(0).toUpperCase()}</div>
+                <div>
+                    <h4>${sellerName}</h4>
+                    <span class="online-status">🟢 Online</span>
+                </div>
+            `;
+            document.getElementById('chatInputArea').style.display = 'flex';
+
+            // Unsubscribe from previous listener
+            if (messagesListener) {
+                // off() is not imported, just let new listener override
+            }
+
+            // Listen to messages
+            const messagesRef = ref(db, 'chats/' + chatId + '/messages');
+            onValue(messagesRef, (snapshot) => {
+                const container = document.getElementById('chatMessages');
+                container.innerHTML = '';
+
+                if (!snapshot.exists()) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <p>No messages yet. Say hello!</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const messages = [];
+                snapshot.forEach((child) => {
+                    messages.push(child.val());
+                });
+
+                messages.forEach((msg) => {
+                    const div = document.createElement('div');
+                    div.className = 'msg ' + (msg.senderId === currentUser.uid ? 'sent' : 'received');
+                    const time = msg.timestamp 
+                        ? new Date(msg.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) 
+                        : '';
+                    div.innerHTML = `
+                        ${escapeHtml(msg.text)}
+                        <span class="msg-time">${time}</span>
+                    `;
+                    container.appendChild(div);
+                });
+
+                container.scrollTop = container.scrollHeight;
+
+                // Mark messages as read
+                markMessagesAsRead(chatId);
+            });
+        }
+
+        async function markMessagesAsRead(chatId) {
+            const chatRef = ref(db, 'chats/' + chatId + '/lastMessage');
+            await update(chatRef, { read: true });
+        }
+
+        window.sendReply = async function() {
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+            if (!text || !activeChatId || !currentUser) return;
+
+            const messagesRef = ref(db, 'chats/' + activeChatId + '/messages');
+            await push(messagesRef, {
+                text: text,
+                senderId: currentUser.uid,
+                senderName: currentUser.displayName || 'Buyer',
+                senderRole: 'buyer',
+                timestamp: Date.now(),
+                read: false
+            });
+
+            await set(ref(db, 'chats/' + activeChatId + '/lastMessage'), {
+                text: text,
+                senderId: currentUser.uid,
+                senderName: currentUser.displayName || 'Buyer',
+                senderRole: 'buyer',
+                timestamp: Date.now(),
+                read: false
+            });
+
+            input.value = '';
+        };
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+
+    <!-- Floating Contact Widget -->
+    <a href="contact.html" style="position:fixed;bottom:25px;right:25px;z-index:9999;text-decoration:none;">
+        <div style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#27ae60,#219653);color:white;display:flex;align-items:center;justify-content:center;font-size:1.6rem;box-shadow:0 4px 15px rgba(39,174,96,0.4);transition:transform 0.3s,box-shadow 0.3s;cursor:pointer;" 
+             onmouseover="this.style.transform='scale(1.1)';this.style.boxShadow='0 6px 25px rgba(39,174,96,0.6)';" 
+             onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 4px 15px rgba(39,174,96,0.4)';">
+            💬
+        </div>
+    </a>
+
+
+    <!-- Mobile Navigation Script -->
+    <script>
+    (function() {
+        const hamburgerBtn = document.getElementById('hamburgerBtn');
+        const mobileNavDropdown = document.getElementById('mobileNavDropdown');
+        const mobileNavOverlay = document.getElementById('mobileNavOverlay');
+        const mobileLoginBtn = document.getElementById('mobileLoginBtn');
+        const mobileUserSection = document.getElementById('mobileUserSection');
+        const mobileUserName = document.getElementById('mobileUserName');
+        const mobileUserEmail = document.getElementById('mobileUserEmail');
+        const mobileUserAvatar = document.getElementById('mobileUserAvatar');
+        const mobileLogoutItem = document.getElementById('mobileLogoutItem');
+        const mobileLogoutLink = document.getElementById('mobileLogoutLink');
+        const mobileNavSellLink = document.getElementById('mobileNavSellLink');
+        const mobileCartCount = document.getElementById('mobileCartCount');
+
+        let isNavOpen = false;
+
+        function toggleNav() {
+            isNavOpen = !isNavOpen;
+            hamburgerBtn.classList.toggle('active', isNavOpen);
+            mobileNavDropdown.classList.toggle('show', isNavOpen);
+            mobileNavOverlay.classList.toggle('show', isNavOpen);
+            document.body.classList.toggle('nav-open', isNavOpen);
+        }
+
+        function closeNav() {
+            isNavOpen = false;
+            hamburgerBtn.classList.remove('active');
+            mobileNavDropdown.classList.remove('show');
+            mobileNavOverlay.classList.remove('show');
+            document.body.classList.remove('nav-open');
+        }
+
+        hamburgerBtn.addEventListener('click', toggleNav);
+        mobileNavOverlay.addEventListener('click', closeNav);
+
+        // Close nav when clicking a link
+        mobileNavDropdown.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                if (this.getAttribute('href') !== '#' || this.id === 'mobileLogoutLink') {
+                    closeNav();
+                }
+            });
+        });
+
+        // Handle logout on mobile
+        if (mobileLogoutLink) {
+            mobileLogoutLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                localStorage.removeItem('sbm_user');
+                showNotification('Logged out successfully', 'success');
+                setTimeout(() => window.location.href = 'index.html', 1000);
+            });
+        }
+
+        // Sync mobile nav with user state
+        function updateMobileNav() {
+            const user = JSON.parse(localStorage.getItem('sbm_user') || '{}');
+            const cart = JSON.parse(localStorage.getItem('smallBizCart') || '[]');
+            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+            if (mobileCartCount) mobileCartCount.textContent = totalItems;
+
+            if (user && user.uid) {
+                // User is logged in - show Account button
+                if (mobileLoginBtn) {
+                    mobileLoginBtn.textContent = 'Account';
+                    mobileLoginBtn.href = 'profile.html';
+                }
+                if (mobileUserSection) mobileUserSection.style.display = 'block';
+                if (mobileUserName) mobileUserName.textContent = user.name || 'User';
+                if (mobileUserEmail) mobileUserEmail.textContent = user.email || '';
+                if (mobileUserAvatar) mobileUserAvatar.textContent = (user.name || 'U').charAt(0).toUpperCase();
+                if (mobileLogoutItem) mobileLogoutItem.style.display = 'list-item';
+
+                if (user.role === 'seller') {
+                    if (mobileNavSellLink) mobileNavSellLink.style.display = 'list-item';
+                } else {
+                    if (mobileNavSellLink) mobileNavSellLink.style.display = 'none';
+                }
+            } else {
+                // Guest - show Sign In button
+                if (mobileLoginBtn) {
+                    mobileLoginBtn.textContent = 'Sign In';
+                    mobileLoginBtn.href = 'login.html';
+                }
+                if (mobileUserSection) mobileUserSection.style.display = 'none';
+                if (mobileLogoutItem) mobileLogoutItem.style.display = 'none';
+                if (mobileNavSellLink) mobileNavSellLink.style.display = 'none';
+            }
+        }
+
+        // Listen for storage changes
+        window.addEventListener('storage', updateMobileNav);
+
+        // Initial update
+        updateMobileNav();
+
+        // Close nav on escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && isNavOpen) {
+                closeNav();
+            }
+        });
+
+        // Close nav on window resize to desktop
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 768 && isNavOpen) {
+                closeNav();
+            }
+        });
+    })();
+    </script>
+
+</body>
+</html>

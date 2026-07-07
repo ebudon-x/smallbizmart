@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - SmallBizMart</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .auth-container {
+            max-width: 450px;
+            margin: 3rem auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .auth-tabs {
+            display: flex;
+            border-bottom: 1px solid #eee;
+        }
+        .auth-tab {
+            flex: 1;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            background: #f8f9fa;
+            border: none;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s;
+        }
+        .auth-tab.active {
+            background: white;
+            color: var(--primary-color);
+            border-bottom: 3px solid var(--secondary-color);
+        }
+        .auth-body {
+            padding: 2rem;
+        }
+        .auth-form {
+            display: none;
+        }
+        .auth-form.active {
+            display: block;
+        }
+        .auth-form h3 {
+            margin-bottom: 1.5rem;
+            color: var(--primary-color);
+            text-align: center;
+        }
+        .auth-form .form-group {
+            margin-bottom: 1.2rem;
+        }
+        .auth-form .btn {
+            width: 100%;
+            margin-top: 0.5rem;
+        }
+        .auth-divider {
+            text-align: center;
+            margin: 1.5rem 0;
+            position: relative;
+        }
+        .auth-divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #ddd;
+        }
+        .auth-divider span {
+            background: white;
+            padding: 0 1rem;
+            position: relative;
+            color: #888;
+            font-size: 0.9rem;
+        }
+        .google-btn {
+            width: 100%;
+            padding: 0.8rem;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+            transition: background 0.3s;
+        }
+        .google-btn:hover {
+            background: #f8f9fa;
+        }
+        .role-selector {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .role-option {
+            flex: 1;
+            padding: 1rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .role-option:hover {
+            border-color: var(--secondary-color);
+        }
+        .role-option.selected {
+            border-color: var(--secondary-color);
+            background: rgba(52, 152, 219, 0.1);
+        }
+        .role-option i {
+            font-size: 1.5rem;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+        .forgot-link {
+            text-align: right;
+            margin-top: -0.5rem;
+            margin-bottom: 1rem;
+        }
+        .forgot-link a {
+            color: var(--secondary-color);
+            font-size: 0.9rem;
+            text-decoration: none;
+        }
+        /* User menu styles */
+        .user-menu { position: relative; }
+        .user-menu-toggle { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: white; text-decoration: none; padding: 0.5rem; border-radius: 4px; transition: background 0.3s; }
+        .user-menu-toggle:hover { background: rgba(255,255,255,0.1); }
+        .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--secondary-color); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem; }
+        .user-dropdown { position: absolute; top: 100%; right: 0; background: white; border-radius: 8px; box-shadow: 0 5px 20px rgba(0,0,0,0.2); min-width: 220px; display: none; z-index: 1000; margin-top: 0.5rem; overflow: hidden; }
+        .user-dropdown.show { display: block; }
+        .user-dropdown-header { padding: 1rem; border-bottom: 1px solid #eee; background: #f8f9fa; }
+        .user-dropdown-header h4 { color: var(--primary-color); font-size: 0.95rem; margin-bottom: 0.25rem; }
+        .user-dropdown-header p { color: #888; font-size: 0.8rem; }
+        .user-dropdown a { display: block; padding: 0.75rem 1rem; color: #555; text-decoration: none; transition: background 0.3s; font-size: 0.9rem; }
+        .user-dropdown a:hover { background: #f8f9fa; color: var(--secondary-color); }
+        .user-dropdown .divider { border-top: 1px solid #eee; margin: 0.25rem 0; }
+        .user-dropdown .logout { color: var(--accent-color); }
+        .nav-sell-link { display: none; }
+        .nav-sell-link.visible { display: list-item; }
+        @media (max-width: 768px) {
+            .user-dropdown { right: -50px; min-width: 200px; }
+            nav ul { flex-wrap: wrap; justify-content: center; }
+            nav ul li { margin: 0.25rem 0.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+    <!-- Mobile Header Bar -->
+    <div class="mobile-header-bar">
+        <div class="mobile-header-inner">
+            <button class="hamburger-btn" id="hamburgerBtn" aria-label="Toggle navigation">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </button>
+            <a href="index.html" class="mobile-logo">Small<span>Biz</span>Mart</a>
+            <a href="login.html" class="mobile-login-btn" id="mobileLoginBtn">Sign In</a>
+        </div>
+    </div>
+
+    <!-- Mobile Navigation Dropdown -->
+    <div class="mobile-nav-dropdown" id="mobileNavDropdown">
+        <div class="mobile-user-section" id="mobileUserSection" style="display:none;">
+            <div class="mobile-user-info">
+                <div class="mobile-user-avatar" id="mobileUserAvatar">U</div>
+                <div class="mobile-user-details">
+                    <h4 id="mobileUserName">User Name</h4>
+                    <p id="mobileUserEmail">user@email.com</p>
+                </div>
+            </div>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="products.html">Products</a></li>
+                <li><a href="about.html">About</a></li>
+                <li class="nav-sell-link" id="mobileNavSellLink" style="display:none;"><a href="seller-dashboard.html">Sell</a></li>
+                <li><a href="profile.html">👤 My Profile</a></li>
+                <li><a href="orders.html">📦 My Orders</a></li>
+                <li><a href="messages.html">💬 Messages</a></li>
+                <li><a href="cart.html" class="mobile-cart-link">
+                    <span>🛒 Shopping Cart</span>
+                    <span class="mobile-cart-badge" id="mobileCartCount">0</span>
+                </a></li>
+                <li id="mobileLogoutItem" style="display:none;"><a href="#" id="mobileLogoutLink" style="color: var(--accent-color);">🚪 Sign Out</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <!-- Mobile Nav Overlay -->
+    <div class="mobile-nav-overlay" id="mobileNavOverlay"></div>
+
+        <div class="container header-content">
+            <div class="logo">Small<span>Biz</span>Mart</div>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="products.html">Products</a></li>
+                    <li><a href="about.html">About</a></li>
+                    <li><a href="contact.html">Contact</a></li>
+                    <li class="nav-sell-link" id="navSellLink"><a href="seller-dashboard.html">Sell</a></li>
+                    <li class="user-menu" id="userMenu">
+                        <a href="#" class="user-menu-toggle" id="userMenuToggle">
+                            <span id="userMenuText">Account</span>
+                        </a>
+                        <div class="user-dropdown" id="userDropdown">
+                            <div class="user-dropdown-header">
+                                <h4 id="dropdownName">Guest</h4>
+                                <p id="dropdownEmail">Sign in to your account</p>
+                            </div>
+                            <a href="profile.html">👤 My Profile</a>
+                            <a href="orders.html">📦 My Orders</a>
+                            <a href="seller-dashboard.html" id="dropdownSellLink" style="display:none;">🏪 Seller Dashboard</a>
+                            <div class="divider"></div>
+                            <a href="login.html" id="dropdownLoginLink">🔑 Sign In</a>
+                            <a href="#" class="logout" id="dropdownLogoutLink" style="display:none;">🚪 Sign Out</a>
+                        </div>
+                    </li>
+                    <li class="cart-icon">
+                        <a href="cart.html" style="color: white; text-decoration: none;">
+                            <span>Cart</span>
+                            <span class="cart-count" id="cartCount">0</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Page Header -->
+    <section class="page-header">
+        <div class="container">
+            <h1>Account</h1>
+            <p>Sign in or create your account</p>
+        </div>
+    </section>
+
+    <!-- Breadcrumb -->
+    <section class="breadcrumb">
+        <div class="container breadcrumb-content">
+            <a href="index.html">Home</a>
+            <span>></span>
+            <span>Account</span>
+        </div>
+    </section>
+
+    <!-- Auth Container -->
+    <section class="container">
+        <div class="auth-container">
+            <div class="auth-tabs">
+                <button class="auth-tab active" data-tab="login">Sign In</button>
+                <button class="auth-tab" data-tab="register">Create Account</button>
+            </div>
+
+            <div class="auth-body">
+                <!-- Login Form -->
+                <form class="auth-form active" id="loginForm">
+                    <h3>Welcome Back!</h3>
+                    <div class="form-group">
+                        <label for="loginEmail">Email Address *</label>
+                        <input type="email" id="loginEmail" required placeholder="your@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Password *</label>
+                        <input type="password" id="loginPassword" required placeholder="Enter your password">
+                    </div>
+                    <div class="forgot-link">
+                        <a href="#" id="forgotPassword">Forgot password?</a>
+                    </div>
+                    <button type="submit" class="btn">Sign In</button>
+
+                    <div class="auth-divider">
+                        <span>OR</span>
+                    </div>
+
+                    <button type="button" class="google-btn" id="googleSignIn">
+                        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                        Continue with Google
+                    </button>
+                </form>
+
+                <!-- Register Form -->
+                <form class="auth-form" id="registerForm">
+                    <h3>Create Your Account</h3>
+                    <div class="form-group">
+                        <label>I want to:</label>
+                        <div class="role-selector">
+                            <div class="role-option selected" data-role="buyer">
+                                <span style="font-size: 1.5rem;">🛒</span>
+                                <strong>Buy Products</strong>
+                                <small style="display:block;color:#888;">Shop from local businesses</small>
+                            </div>
+                            <div class="role-option" data-role="seller">
+                                <span style="font-size: 1.5rem;">🏪</span>
+                                <strong>Sell Products</strong>
+                                <small style="display:block;color:#888;">List and sell your items</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="regName">Full Name *</label>
+                        <input type="text" id="regName" required placeholder="John Doe">
+                    </div>
+                    <div class="form-group">
+                        <label for="regEmail">Email Address *</label>
+                        <input type="email" id="regEmail" required placeholder="your@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="regPhone">Phone Number *</label>
+                        <input type="tel" id="regPhone" required placeholder="+234 800 000 0000">
+                    </div>
+                    <div class="form-group">
+                        <label for="regPassword">Password *</label>
+                        <input type="password" id="regPassword" required placeholder="Min 6 characters">
+                    </div>
+                    <div class="form-group">
+                        <label for="regConfirm">Confirm Password *</label>
+                        <input type="password" id="regConfirm" required placeholder="Repeat password">
+                    </div>
+                    <button type="submit" class="btn">Create Account</button>
+
+                    <div class="auth-divider">
+                        <span>OR</span>
+                    </div>
+
+                    <button type="button" class="google-btn" id="googleSignUp">
+                        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                        Sign up with Google
+                    </button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>About Us</h3>
+                    <p>SmallBizMart is dedicated to helping Nigerian small businesses thrive in the digital economy.</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="products.html">Products</a></li>
+                        <li><a href="about.html">About Us</a></li>
+                        <li><a href="contact.html">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Customer Support</h3>
+                    <ul>
+                        <li><a href="#">FAQs</a></li>
+                        <li><a href="#">Shipping Policy</a></li>
+                        <li><a href="#">Returns & Refunds</a></li>
+                        <li><a href="contact.html">Contact Us</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Contact Info</h3>
+                    <ul>
+                        <li>Email: support@smallbizmart.com</li>
+                        <li>Phone: +234 813 474 4132</li>
+                        <li>Address: 3 Ezimora Street Awada, Anambra, Nigeria</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2025 SmallBizMart. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="main.js"></script>
+    <script src="nav.js"></script>
+    <script type="module" src="auth.js"></script>
+
+    <!-- Mobile Navigation Script -->
+    <script>
+    (function() {
+        const hamburgerBtn = document.getElementById('hamburgerBtn');
+        const mobileNavDropdown = document.getElementById('mobileNavDropdown');
+        const mobileNavOverlay = document.getElementById('mobileNavOverlay');
+        const mobileLoginBtn = document.getElementById('mobileLoginBtn');
+        const mobileUserSection = document.getElementById('mobileUserSection');
+        const mobileUserName = document.getElementById('mobileUserName');
+        const mobileUserEmail = document.getElementById('mobileUserEmail');
+        const mobileUserAvatar = document.getElementById('mobileUserAvatar');
+        const mobileLogoutItem = document.getElementById('mobileLogoutItem');
+        const mobileLogoutLink = document.getElementById('mobileLogoutLink');
+        const mobileNavSellLink = document.getElementById('mobileNavSellLink');
+        const mobileCartCount = document.getElementById('mobileCartCount');
+
+        let isNavOpen = false;
+
+        function toggleNav() {
+            isNavOpen = !isNavOpen;
+            hamburgerBtn.classList.toggle('active', isNavOpen);
+            mobileNavDropdown.classList.toggle('show', isNavOpen);
+            mobileNavOverlay.classList.toggle('show', isNavOpen);
+            document.body.classList.toggle('nav-open', isNavOpen);
+        }
+
+        function closeNav() {
+            isNavOpen = false;
+            hamburgerBtn.classList.remove('active');
+            mobileNavDropdown.classList.remove('show');
+            mobileNavOverlay.classList.remove('show');
+            document.body.classList.remove('nav-open');
+        }
+
+        hamburgerBtn.addEventListener('click', toggleNav);
+        mobileNavOverlay.addEventListener('click', closeNav);
+
+        // Close nav when clicking a link
+        mobileNavDropdown.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                if (this.getAttribute('href') !== '#' || this.id === 'mobileLogoutLink') {
+                    closeNav();
+                }
+            });
+        });
+
+        // Handle logout on mobile
+        if (mobileLogoutLink) {
+            mobileLogoutLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                localStorage.removeItem('sbm_user');
+                showNotification('Logged out successfully', 'success');
+                setTimeout(() => window.location.href = 'index.html', 1000);
+            });
+        }
+
+        // Sync mobile nav with user state
+        function updateMobileNav() {
+            const user = JSON.parse(localStorage.getItem('sbm_user') || '{}');
+            const cart = JSON.parse(localStorage.getItem('smallBizCart') || '[]');
+            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+            if (mobileCartCount) mobileCartCount.textContent = totalItems;
+
+            if (user && user.uid) {
+                // User is logged in - show Account button
+                if (mobileLoginBtn) {
+                    mobileLoginBtn.textContent = 'Account';
+                    mobileLoginBtn.href = 'profile.html';
+                }
+                if (mobileUserSection) mobileUserSection.style.display = 'block';
+                if (mobileUserName) mobileUserName.textContent = user.name || 'User';
+                if (mobileUserEmail) mobileUserEmail.textContent = user.email || '';
+                if (mobileUserAvatar) mobileUserAvatar.textContent = (user.name || 'U').charAt(0).toUpperCase();
+                if (mobileLogoutItem) mobileLogoutItem.style.display = 'list-item';
+
+                if (user.role === 'seller') {
+                    if (mobileNavSellLink) mobileNavSellLink.style.display = 'list-item';
+                } else {
+                    if (mobileNavSellLink) mobileNavSellLink.style.display = 'none';
+                }
+            } else {
+                // Guest - show Sign In button
+                if (mobileLoginBtn) {
+                    mobileLoginBtn.textContent = 'Sign In';
+                    mobileLoginBtn.href = 'login.html';
+                }
+                if (mobileUserSection) mobileUserSection.style.display = 'none';
+                if (mobileLogoutItem) mobileLogoutItem.style.display = 'none';
+                if (mobileNavSellLink) mobileNavSellLink.style.display = 'none';
+            }
+        }
+
+        // Listen for storage changes
+        window.addEventListener('storage', updateMobileNav);
+
+        // Initial update
+        updateMobileNav();
+
+        // Close nav on escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && isNavOpen) {
+                closeNav();
+            }
+        });
+
+        // Close nav on window resize to desktop
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 768 && isNavOpen) {
+                closeNav();
+            }
+        });
+    })();
+    </script>
+
+</body>
+</html>
